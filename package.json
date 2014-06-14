@@ -19,11 +19,13 @@
   "homepage": "https://github.com/charliek/node-blog",
   "dependencies": {
     "co-body": "0.0.2",
+    "co-request": "^0.2.0",
     "co-views": "^0.2.0",
     "koa": "^0.7.0",
     "koa-logger": "^1.2.1",
     "koa-route": "^1.1.4",
     "koa-static": "^1.4.5",
+    "nconf": "^0.6.9",
     "swig": "^1.3.2"
   },
   "engines": {

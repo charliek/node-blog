@@ -3,8 +3,15 @@ var logger = require('koa-logger');
 var route = require('koa-route');
 var parse = require('co-body');
 var koa = require('koa');
+var request = require('co-request');
 var serve = require('koa-static');
+var nconf = require('nconf');
 var app = koa();
+
+// config
+nconf.env().argv().defaults({
+  blog_prefix: 'http://localhost:5678'
+});
 
 // database
 var posts = [];
@@ -19,11 +26,25 @@ app.use(route.get('/post/new', add));
 app.use(route.get('/post/:id', show));
 app.use(route.post('/post', create));
 
+function blogUrl(path) {
+  return nconf.get('blog_prefix') + path;
+}
+
+function *blogContent(path) {
+  var resp = yield request(blogUrl(path));
+  if (resp.statusCode == 200) {
+    resp.json = JSON.parse(resp.body);
+  }
+  // TODO add error handling
+  return resp;
+}
+
 /**
  * Post listing.
  */
 function *list() {
-  this.body = yield render('list', { posts: posts });
+  var resp = yield blogContent('/post');
+  this.body = yield render('list', { posts: resp.json });
 }
 
 /**
@@ -37,9 +58,12 @@ function *add() {
  * Show post :id.
  */
 function *show(id) {
-  var post = posts[id];
-  if (!post) this.throw(404, 'invalid post id');
-  this.body = yield render('show', { post: post });
+  // TODO validate id
+  var resp = yield blogContent('/post/'+id);
+  if (resp.statusCode == 404) {
+    this.throw(404, 'invalid post id');
+  }
+  this.body = yield render('show', { post: resp.json });
 }
 
 /**
